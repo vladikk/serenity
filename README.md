@@ -2,6 +2,20 @@
 
 A macOS menu bar app for mixing ambient sounds, inspired by [A Soft Murmur](https://asoftmurmur.com).
 
+Mix 26 sounds (rain, waves, fire, coffee shop, noise and more), let them meander, save mixes, set a sleep or
+fade timer, and start or stop from a global hotkey or the media keys.
+
+## Install
+
+Requires macOS 15 (Sequoia) or later.
+
+```sh
+brew install --cask vladikk/tap/serenity
+```
+
+Update with `brew upgrade --cask serenity`. Or download the DMG from the
+[latest release](https://github.com/vladikk/serenity/releases/latest) and drag Serenity to Applications.
+
 ## Sounds
 
 The loops are built from freely licensed (CC0 / CC BY) recordings on [Freesound](https://freesound.org).
@@ -19,9 +33,16 @@ crossfades, makes a seamless loop, normalises loudness and writes `Sounds/<key>.
 ## Building
 
 ```sh
-./build.sh                             # produces build/Serenity.app
+./build.sh                             # produces build/Serenity.app (ad-hoc signed)
 cp -R build/Serenity.app /Applications/
 ```
+
+`scripts/release.sh` builds a Developer ID signed, notarized DMG, publishes it as a GitHub release and updates the
+cask in [vladikk/homebrew-tap](https://github.com/vladikk/homebrew-tap). The version comes from `VERSION`.
+
+## License
+
+The code is MIT licensed (see `LICENSE`). The sounds keep the licenses of their source recordings, listed below.
 
 ## Credits
 

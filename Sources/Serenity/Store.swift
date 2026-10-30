@@ -358,9 +358,10 @@ final class Store {
     private static let defaultsKey = "state.v1"
 
     private func load() {
-        // One-time import of settings from when the app was called Murmur.
+        // One-time import of settings from earlier local builds (local.serenity.app, and Murmur before that).
         if UserDefaults.standard.data(forKey: Self.defaultsKey) == nil,
-           let old = UserDefaults(suiteName: "local.murmur.app")?.data(forKey: Self.defaultsKey) {
+           let old = ["local.serenity.app", "local.murmur.app"].lazy
+               .compactMap({ UserDefaults(suiteName: $0)?.data(forKey: Self.defaultsKey) }).first {
             UserDefaults.standard.set(old, forKey: Self.defaultsKey)
         }
         guard let data = UserDefaults.standard.data(forKey: Self.defaultsKey),
