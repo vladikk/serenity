@@ -2,3 +2,4 @@
 build/
 Sounds/
 .DS_Store
+.cache/

@@ -73,3 +73,27 @@ enum MixNamer {
         }
     }
 }
+
+struct SoundCredit: Decodable {
+    struct Source: Decodable {
+        let title: String
+        let author: String
+        let url: URL
+        let license: String
+        let licenseUrl: URL
+    }
+
+    let sources: [Source]?
+    let generated: String?
+}
+
+/// Attribution for each sound, written by tools/build_sounds.py next to the sound files.
+enum Credits {
+    static let all: [String: SoundCredit] = {
+        let url = Bundle.main.url(forResource: "credits", withExtension: "json", subdirectory: "Sounds")
+            ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("Sounds/credits.json")
+        guard let data = try? Data(contentsOf: url),
+              let credits = try? JSONDecoder().decode([String: SoundCredit].self, from: data) else { return [:] }
+        return credits
+    }()
+}

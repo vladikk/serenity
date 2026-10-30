@@ -3,6 +3,11 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+if [ ! -f Sounds/credits.json ]; then
+    echo "Sounds/ is missing. Build the sound loops first: python3 tools/build_sounds.py" >&2
+    exit 1
+fi
+
 swift build -c release
 BIN="$(swift build -c release --show-bin-path)/Serenity"
 

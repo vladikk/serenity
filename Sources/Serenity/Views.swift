@@ -373,7 +373,7 @@ struct FooterView: View {
 // MARK: Settings
 
 enum SettingsTab: String {
-    case general, sounds
+    case general, sounds, credits
 }
 
 struct SettingsView: View {
@@ -387,6 +387,9 @@ struct SettingsView: View {
             SoundSettings()
                 .tabItem { Label("Sounds", systemImage: "speaker.wave.2") }
                 .tag(SettingsTab.sounds)
+            CreditsView()
+                .tabItem { Label("Credits", systemImage: "heart") }
+                .tag(SettingsTab.credits)
         }
         .frame(width: 440)
     }
@@ -589,5 +592,41 @@ struct HotkeyRecorder: View {
         monitor = nil
         if recording { store.recordingHotkey = false }
         recording = false
+    }
+}
+
+// MARK: Credits
+
+struct CreditsView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Sounds are built from freely licensed field recordings on Freesound.org, edited and looped. Thank you to everyone who shared them.")
+                    .font(.callout).foregroundStyle(.secondary)
+                ForEach(Catalog.all) { sound in
+                    if let credit = Credits.all[sound.key] {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Label(sound.label, systemImage: sound.symbol).font(.headline)
+                            if let generated = credit.generated {
+                                Text(generated).font(.caption).foregroundStyle(.secondary)
+                            }
+                            ForEach(credit.sources ?? [], id: \.url) { source in
+                                HStack(spacing: 4) {
+                                    Link("\u{201C}\(source.title)\u{201D} by \(source.author)", destination: source.url)
+                                    Text("·").foregroundStyle(.secondary)
+                                    Link(source.license, destination: source.licenseUrl)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .font(.caption)
+                                .lineLimit(1)
+                            }
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
+        }
+        .frame(height: 560)
     }
 }
