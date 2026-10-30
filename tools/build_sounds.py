@@ -5,7 +5,10 @@ For each sound in tools/sounds.json: fetch the source pages (verifying the licen
 download the HQ previews, join multiple sources with crossfades, turn the result into a seamless loop,
 normalise loudness, and encode to AAC. Writes Sounds/<key>.mp4 and Sounds/credits.json.
 
+Also rewrites the credits section of README.md.
+
 Usage: python3 tools/build_sounds.py [sound ...]
+       python3 tools/build_sounds.py --credits    # only rewrite the README credits from Sounds/credits.json
 """
 import html
 import json
@@ -30,6 +33,10 @@ TARGET_LUFS = -23.0
 MAX_TRUE_PEAK = -1.5
 MAX_LIMITING_DB = 8.0   # how far a limiter may tame transients (crackles, ticks) to reach the target
 NOISE_SECONDS = 90
+README = ROOT / "README.md"
+CREDITS_START, CREDITS_END = "<!-- credits:start -->", "<!-- credits:end -->"
+EDIT_NOTE = ("All recordings were modified: trimmed, joined with crossfades, made into seamless loops, "
+             "loudness-normalised and re-encoded.")
 
 LICENSES = {
     "publicdomain/zero/1.0": ("CC0 1.0", "https://creativecommons.org/publicdomain/zero/1.0/"),
@@ -62,9 +69,10 @@ def source_info(user, sound_id):
     title = re.search(r'<meta property="og:title" content="([^"]*)"', page)
     duration = re.search(r'data-duration="([0-9.]+)"', page)
     name, license_url = LICENSES[found[0]]
+    author = urllib.parse.unquote(user)
     return {
-        "title": html.unescape(title.group(1)) if title else f"Sound {sound_id}",
-        "author": urllib.parse.unquote(user),
+        "title": clean_title(html.unescape(title.group(1)), author) if title else f"Sound {sound_id}",
+        "author": author,
         "url": page_url,
         "license": name,
         "licenseUrl": license_url,
@@ -72,6 +80,12 @@ def source_info(user, sound_id):
         "preview": preview.group(0).replace("-hq.mp3", "-hq.ogg"),
         "duration": float(duration.group(1)) if duration else None,
     }
+
+
+def clean_title(title, author):
+    """Freesound page titles read "<title> by <author>"; the author is credited separately."""
+    title, suffix = title.strip(), f" by {author}"
+    return title[:-len(suffix)] if title.endswith(suffix) else title
 
 
 def duration_of(path):
@@ -167,18 +181,47 @@ def build(key, spec, work):
     return credit
 
 
+def write_readme_credits(credits):
+    catalog = (ROOT / "Sources" / "Serenity" / "Catalog.swift").read_text()
+    labels = dict(re.findall(r'SoundInfo\(key: "(\w+)", label: "([^"]+)"', catalog))
+    lines = [CREDITS_START, "", EDIT_NOTE, ""]
+    for key, label in labels.items():
+        credit = credits.get(key)
+        if not credit:
+            continue
+        if "generated" in credit:
+            lines.append(f"- **{label}**: {credit['generated']}")
+            continue
+        parts = [f"[\u201c{s['title']}\u201d]({s['url']}) by {s['author']}, [{s['license']}]({s['licenseUrl']})"
+                 for s in credit["sources"]]
+        lines.append(f"- **{label}**: " + "; ".join(parts))
+    lines += ["", CREDITS_END]
+    text = README.read_text()
+    start, end = text.index(CREDITS_START), text.index(CREDITS_END) + len(CREDITS_END)
+    README.write_text(text[:start] + "\n".join(lines) + text[end:])
+
+
 def main():
+    credits_path = OUT / "credits.json"
+    if sys.argv[1:] == ["--credits"]:
+        credits = json.loads(credits_path.read_text())
+        for credit in credits.values():
+            for source in credit.get("sources", []):
+                source["title"] = clean_title(source["title"], source["author"])
+        credits_path.write_text(json.dumps(credits, indent=2, ensure_ascii=False) + "\n")
+        write_readme_credits(credits)
+        return
     manifest = {k: v for k, v in json.loads((ROOT / "tools" / "sounds.json").read_text()).items()
                 if not k.startswith("_")}
     keys = sys.argv[1:] or list(manifest)
     OUT.mkdir(exist_ok=True)
     work = ROOT / ".cache" / "work"
     work.mkdir(parents=True, exist_ok=True)
-    credits_path = OUT / "credits.json"
     credits = json.loads(credits_path.read_text()) if credits_path.exists() else {}
     for key in keys:
         credits[key] = build(key, manifest[key], work)
         credits_path.write_text(json.dumps(credits, indent=2, ensure_ascii=False) + "\n")
+    write_readme_credits(credits)
 
 
 if __name__ == "__main__":

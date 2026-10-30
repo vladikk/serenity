@@ -601,7 +601,7 @@ struct CreditsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Text("Sounds are built from freely licensed field recordings on Freesound.org, edited and looped. Thank you to everyone who shared them.")
+                Text("Sounds are built from freely licensed field recordings on Freesound.org. All recordings were modified: trimmed, joined with crossfades, made into seamless loops, loudness-normalised and re-encoded. Thank you to everyone who shared them.")
                     .font(.callout).foregroundStyle(.secondary)
                 ForEach(Catalog.all) { sound in
                     if let credit = Credits.all[sound.key] {
