@@ -344,7 +344,6 @@ struct MixesView: View {
 
 struct FooterView: View {
     @Environment(Store.self) private var store
-    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         HStack {
@@ -352,10 +351,7 @@ struct FooterView: View {
                 .font(.caption).foregroundStyle(.secondary).lineLimit(1)
             Spacer()
             Menu {
-                Button("Settings…") {
-                    openWindow(id: "settings")
-                    NSApp.activate()
-                }
+                Button("Settings…") { SettingsWindow.show() }
                 .keyboardShortcut(",")
                 Divider()
                 Button("Quit Serenity") { NSApp.terminate(nil) }
