@@ -97,7 +97,7 @@ else
   else
     git -C "$TAP_DIR" add -A
     git -C "$TAP_DIR" commit -qm "$CASK_NAME $VERSION"
-    git -C "$TAP_DIR" push -q
+    git -C "$TAP_DIR" -c credential.helper= -c credential.helper="!gh auth git-credential" push -q
     echo "   pushed cask $VERSION to tap"
   fi
 fi
