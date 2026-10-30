@@ -37,6 +37,10 @@ echo "==> Releasing $APP_NAME $VERSION (team $TEAM_ID)"
 if ! security find-identity -v -p codesigning | grep -q "$IDENTITY.*$TEAM_ID"; then
   echo "error: no '$IDENTITY ($TEAM_ID)' identity in keychain"; exit 1
 fi
+# Fail fast if the notary service won't accept submissions (e.g. an unsigned Apple agreement).
+if ! NOTARY_CHECK="$(xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" 2>&1)"; then
+  echo "error: notary service rejected profile '$NOTARY_PROFILE':"; echo "$NOTARY_CHECK" | tail -3; exit 1
+fi
 if [ -n "$(git status --porcelain)" ]; then
   echo "error: working tree has uncommitted changes"; exit 1
 fi
